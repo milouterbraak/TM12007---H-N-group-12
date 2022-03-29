@@ -19,7 +19,7 @@ Below are functions to load the dataset of your choice. After that, it is all up
 # Data loading functions. Uncomment the one you want to use
 #from adni.load_data import load_data
 #from brats.load_data import load_data
-from hn.load_data import load_data
+from load_data import load_data
 #from ecg.load_data import load_data
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, RobustScaler
