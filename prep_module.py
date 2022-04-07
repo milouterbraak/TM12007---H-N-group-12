@@ -33,7 +33,7 @@ from sklearn import metrics
 
 def prep(features, label):
     # Splitting data in train and test group
-    X_train, X_test, y_train, y_test = train_test_split(features, label, test_size=.2)
+    X_train, X_test, y_train, y_test = train_test_split(features, label, test_size=.2, stratify=label)
 
     # functie van maken??
 
