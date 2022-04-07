@@ -1,5 +1,8 @@
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc
+
 def plot_roc_curve(y_score, y_truth):
-    from sklearn.metrics import roc_curve, auc
+
     '''
     Plot an ROC curve.
     '''
