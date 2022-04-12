@@ -87,7 +87,7 @@ def prep(features, label):
 
     for a in alphas:
         # Fit classifier
-        clf = Lasso(alpha=a, fit_intercept=False)
+        clf = Lasso(alpha=a, fit_intercept=False,tol=0.044)
         clf.fit(X_train_scaled, y_train_bin) 
         y_pred = clf.predict(X_test_scaled)
         
@@ -96,38 +96,38 @@ def prep(features, label):
         accuracies.append(accuracy)
         coefs.append(clf.coef_)
 
-    # Weights
-    plt.figure()
-    ax = plt.gca()
-    ax.plot(alphas, np.squeeze(coefs))
-    ax.set_xscale('log')
-    ax.set_xlim(ax.get_xlim()[::-1])  # reverse axis
-    plt.xlabel('alpha')
-    plt.ylabel('weights')
-    plt.title('Lasso coefficients as a function of the regularization')
-    plt.axis('tight')
-    plt.show()
+    # # Weights
+    # plt.figure()
+    # ax = plt.gca()
+    # ax.plot(alphas, np.squeeze(coefs))
+    # ax.set_xscale('log')
+    # ax.set_xlim(ax.get_xlim()[::-1])  # reverse axis
+    # plt.xlabel('alpha')
+    # plt.ylabel('weights')
+    # plt.title('Lasso coefficients as a function of the regularization')
+    # plt.axis('tight')
+    # plt.show()
 
-    # Performance
-    plt.figure()
-    ax = plt.gca()
-    ax.plot(alphas, accuracies)
-    ax.set_xscale('log')
-    ax.set_xlim(ax.get_xlim()[::-1])  # reverse axis
-    plt.xlabel('alpha')
-    plt.ylabel('accuracies')
-    plt.title('Performance as a function of the regularization')
-    plt.axis('tight')
-    plt.show()
+    # # Performance
+    # plt.figure()
+    # ax = plt.gca()
+    # ax.plot(alphas, accuracies)
+    # ax.set_xscale('log')
+    # ax.set_xlim(ax.get_xlim()[::-1])  # reverse axis
+    # plt.xlabel('alpha')
+    # plt.ylabel('accuracies')
+    # plt.title('Performance as a function of the regularization')
+    # plt.axis('tight')
+    # plt.show()
 
 
-    selector = SelectFromModel(estimator=Lasso(alpha=10**(-6)), threshold='median')
+    selector = SelectFromModel(estimator=Lasso(alpha=10**(-6), tol=0.002248888888888889), threshold='median')
     selector.fit(X_train_scaled, y_train_bin)
     n_original = X_train_scaled.shape[1]
     X_train_fs = selector.transform(X_train_scaled)
     X_test_fs = selector.transform(X_test_scaled)
     n_selected = X_train_fs.shape[1]
-    print(f"Selected {n_selected} from {n_original} features.")
+    # print(f"Selected {n_selected} from {n_original} features.")
 
     N_COMP = .9
     pca = PCA(n_components=N_COMP)
@@ -135,7 +135,7 @@ def prep(features, label):
     X_train_pca = pca.transform(X_train_fs)
     X_test_pca = pca.transform(X_test_fs)
 
-    print(f'Number of features extracted from the PCA: {X_test_pca.shape[1]}')
+    # print(f'Number of features extracted from the PCA: {X_test_pca.shape[1]}')
 
 
 
@@ -205,8 +205,8 @@ def prep(features, label):
     seaborn.boxplot(y='auc', x='set', data=results)
 
     optimal_c = float(np.mean(best_cls))
-    print(f"The optimal C={optimal_c}")
-    print(results)
+    # print(f"The optimal C={optimal_c}")
+    # print(results)
 
 
     # Use the optimal parameters without any tuning to validate the optimal classifier
@@ -215,24 +215,17 @@ def prep(features, label):
     clf.fit(X_train_pca, y_train)
 
     # Test the classifier on the indepedent test data
-    probabilities = clf.predict_proba(X_test_pca)
-    scores = probabilities[:, 1]
+    probabilities_train = clf.predict_proba(X_train_pca)
+    probabilities_test = clf.predict_proba(X_test_pca)
+    scores_train = probabilities_train[:, 1]
+    scores_test = probabilities_test[:, 1]
 
     # Get the auc
-    auc_svc = metrics.roc_auc_score(y_test, scores)
-    print(f'The AUC on the test set is {auc_svc} using a {optimal_c} Slack')
+    auc_svc_train = metrics.roc_auc_score(y_train, scores_train)
+    auc_svc_test = metrics.roc_auc_score(y_test, scores_test)
+    # print(f'The AUC on the test set is {auc_svc_test} using a {optimal_c} Slack')
 
 
-
-
-
-
-    score_train_svc = clf.score(X_train_pca, y_train)
-    score_test_svc = clf.score(X_test_pca, y_test)
-    print(f"Training result svc: {score_train_svc}")
-    print(f"Test result svc: {score_test_svc}")
-
-    # ROC(probabilities,y_test_bin)
 
 #  KNN
 
@@ -295,27 +288,26 @@ def prep(features, label):
     seaborn.boxplot(y='auc', x='set', data=results)
 
     optimal_n = int(np.mean(best_cls))
-    print(f"The optimal k={optimal_n}")
-    print(results)
+    # print(f"The optimal k={optimal_n}")
+    # print(results)
 
 
     # Use the optimal parameters without any tuning to validate the optimal classifier
-    clf = SVC(kernel = 'linear', probability=True, C=optimal_n)
+    clf = KNeighborsClassifier(weights='distance', n_neighbors=optimal_n)
     # Fit on the entire dataset
     clf.fit(X_train_pca, y_train)
 
     # Test the classifier on the indepedent test data
-    probabilities = clf.predict_proba(X_test_pca)
-    scores = probabilities[:, 1]
+    probabilities_train = clf.predict_proba(X_train_pca)
+    probabilities_test = clf.predict_proba(X_test_pca)
+    scores_train = probabilities_train[:, 1]
+    scores_test = probabilities_test[:, 1]
 
     # Get the auc
-    auc_knn = metrics.roc_auc_score(y_test, scores)
-    print(f'The AUC on the test set is {auc_knn} using a {optimal_n}-NN')
+    auc_knn_train = metrics.roc_auc_score(y_train, scores_train)
+    auc_knn_test = metrics.roc_auc_score(y_test, scores_test)
+    # print(f'The AUC on the test set is {auc_knn_test} using a {optimal_n}-NN')
 
-    score_train_knn = clf.score(X_train_pca, y_train)
-    score_test_knn = clf.score(X_test_pca, y_test)
-    print(f"Training result knn: {score_train_knn}")
-    print(f"Test result knn: {score_test_knn}")
 
-    # ROC(probabilities,y_test_bin)
-    return score_train_svc, score_test_svc, auc_svc,score_train_knn, score_test_knn, auc_knn
+
+    return auc_svc_train, auc_svc_test, auc_knn_train, auc_knn_test
